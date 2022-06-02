@@ -2,6 +2,7 @@ import os
 from http import HTTPStatus
 
 import logging
+import json
 import requests
 import sys
 import time
@@ -43,7 +44,7 @@ def send_message(bot, message):
 
 
 def get_api_answer(current_timestamp):
-    """ Делает запрос к единственному эндпоинту API-сервиса."""
+    """Делает запрос к единственному эндпоинту API-сервиса."""
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
