@@ -6,7 +6,7 @@ import requests
 import sys
 import time
 from dotenv import load_dotenv
-import telegram
+from telegram import Bot
 
 load_dotenv()
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s, %(levelname)s, %(message)s',
-    handlers=[logging.FileHandler('main.log'),
+    handlers=[logging.FileHandler('main.log', encoding='UTF-8'),
               logging.StreamHandler(sys.stdout)]
 )
 
@@ -47,38 +47,46 @@ def get_api_answer(current_timestamp):
     timestamp = current_timestamp or int(time.time())
     params = {'from_date': timestamp}
     try:
-        response = requests.get(ENDPOINT, headers=HEADERS, params=params)
+        response = requests.get(url=ENDPOINT, headers=HEADERS, params=params)
     except Exception as error:
         logger.error(f'Ошибка при запросе: {error}')
-        if response.status_code != HTTPStatus.OK:
-            logger.error('Сайт не доступен')
-        response = response.json()
-        return response
+    if response.status_code != HTTPStatus.OK:
+        logger.error('Сайт не доступен')
+        raise ConnectionError(f'Ошибка {response.status_code}!')
+    try:
+        return response.json()
+    except json.JSONDecodeError:
+        logger.error('Сервер вернул невалидный json')
+        send_message('Сервер вернул невалидный json')
 
 
 def check_response(response):
-    """проверяет ответ API на корректность."""
-    if type(response) is not dict:
+    """Проверяет ответ API на корректность."""
+    if not isinstance(response, dict):
         logger.error('Неверный формат данных')
         raise TypeError('Неверный формат данных')
-    try:
-        homework = response.get('homeworks')
-    except IndexError:
-        logger.error('Тут нечего отправлять')
-    if type(response) is not list:
-        logger.error('Неверный формат данных')
-        raise TypeError('Неверный формат данных')
-    return homework[0]
+    else:
+        if response:
+            if 'homeworks' in response:
+                if not isinstance(response['homeworks'], list):
+                    logger.error('Неверный формат данных')
+                    raise TypeError('Неверный формат данных')
+                return response.get('homeworks')
+            else:
+                logger.error('homeworks отсутствует')
+                raise Exception('homeworks отсутствует')
+        logging.error('Dict is empty')
+        raise Exception('Dict is empty')
 
 
 def parse_status(homework):
     """Извлекает статус домашней работы."""
-    homework_name = homework['homework_name']
+    homework_name = homework.get('homework_name')
     homework_status = homework.get('status')
     if 'homework_name' not in homework:
         logger.error('Работы с таким именем нет')
         raise KeyError('Работы с таким именем не обнаружено')
-    if homework_status not in HOMEWORK_STATUSES:
+    if homework_status not in HOMEWORK_STATUSES.keys():
         logger.error('Неверный статус работы')
         raise KeyError('Неверный статус работы')
     verdict = HOMEWORK_STATUSES[homework_status]
@@ -97,7 +105,7 @@ def check_tokens():
 def main():
     """Основная логика работы бота."""
     bot = Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time())
+    current_timestamp = 1620741126
     check_tokens()
     if check_tokens() is True:
         while True:
