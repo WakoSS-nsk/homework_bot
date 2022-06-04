@@ -26,6 +26,10 @@ HOMEWORK_VERDICTS = {
 }
 
 
+class SendMessageException(Exception):
+    pass
+
+
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
     logger.info('Начал отправку сообщения в Telegram')
@@ -34,7 +38,7 @@ def send_message(bot, message):
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
     except Exception:
         logger.error('Ошибка отправки сообщения в телеграмм')
-        raise SendMessageError('Ошибка отправки сообщения в телеграмм')
+        raise SendMessageException('Ошибка отправки сообщения в телеграмм')
 
 
 def get_api_answer(current_timestamp: int) -> Union[dict, None]:
