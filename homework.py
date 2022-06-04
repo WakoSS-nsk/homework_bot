@@ -33,6 +33,7 @@ def send_message(bot, message):
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
     except SendMessageException:
+        logger.error('Ошибка отправки сообщения в телеграмм')
         raise SendMessageException('Ошибка отправки сообщения в телеграмм')
 
 
