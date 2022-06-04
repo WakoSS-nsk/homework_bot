@@ -32,8 +32,8 @@ def send_message(bot, message):
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
-    except SendingMessageError:
-        raise SendMessageException
+    except SendMessageException:
+        raise SendMessageException('Ошибка отправки сообщения в телеграмм')
 
 
 def get_api_answer(current_timestamp: int) -> Union[dict, None]:
@@ -125,9 +125,5 @@ if __name__ == '__main__':
         handlers=[logging.FileHandler('main.log', encoding='UTF-8'),
                   logging.StreamHandler(sys.stdout)]
     )
-
-
-    class SendMessageException(Exception):
-        logger.error('Ошибка отправки сообщения в телеграмм')
 
     main()
