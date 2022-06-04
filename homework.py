@@ -27,6 +27,7 @@ HOMEWORK_VERDICTS = {
 
 
 class SendMessageException(Exception):
+    """Ошибка отправки сообщения в телеграмм."""
     pass
 
 
