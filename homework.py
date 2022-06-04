@@ -28,7 +28,7 @@ HOMEWORK_VERDICTS = {
 
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
-    logger.info('Начали отправку сообщения в Telegram')
+    logger.info('Начал отправку сообщения в Telegram')
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
@@ -65,8 +65,8 @@ def check_response(response):
         logger.error('Dict is empty')
         raise Exception('Dict is empty')
     if 'homeworks' not in response:
-        logger.error('homeworks отсутствует')
-        raise Exception('homeworks отсутствует')
+        logger.error('homeworks отсутствует в ответе API')
+        raise Exception('homeworks отсутствует в ответе API')
     if not isinstance(response['homeworks'], list):
         logger.error('Неверный формат данных')
         raise TypeError('Данный формат данных не является списком')
