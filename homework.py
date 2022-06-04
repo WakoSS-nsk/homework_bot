@@ -32,9 +32,9 @@ def send_message(bot, message):
     try:
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
-    except SendMessageException:
+    except Exception:
         logger.error('Ошибка отправки сообщения в телеграмм')
-        raise SendMessageException('Ошибка отправки сообщения в телеграмм')
+        raise SendMessageError('Ошибка отправки сообщения в телеграмм')
 
 
 def get_api_answer(current_timestamp: int) -> Union[dict, None]:
@@ -69,7 +69,7 @@ def check_response(response):
         raise Exception('homeworks отсутствует')
     if not isinstance(response['homeworks'], list):
         logger.error('Неверный формат данных')
-        raise TypeError('Неверный формат данных')
+        raise TypeError('Данный формат данных не является списком')
     return response.get('homeworks')
 
 
