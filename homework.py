@@ -9,6 +9,7 @@ import time
 from dotenv import load_dotenv
 from telegram import Bot
 from typing import Union
+from exceptions import SendMessageException, RequestException
 
 load_dotenv()
 
@@ -26,12 +27,6 @@ HOMEWORK_VERDICTS = {
 }
 
 
-class SendMessageException(Exception):
-    """Ошибка отправки сообщения в телеграмм."""
-
-    pass
-
-
 def send_message(bot, message):
     """Отправляет сообщение в Telegram чат."""
     logger.info('Начал отправку сообщения в Telegram')
@@ -39,7 +34,6 @@ def send_message(bot, message):
         bot.send_message(TELEGRAM_CHAT_ID, message)
         logger.info(f'Сообщение в чат {TELEGRAM_CHAT_ID}: {message}')
     except Exception:
-        logger.error('Ошибка отправки сообщения в телеграмм')
         raise SendMessageException('Ошибка отправки сообщения в телеграмм')
 
 
@@ -52,15 +46,13 @@ def get_api_answer(current_timestamp: int) -> Union[dict, None]:
     try:
         response = requests.get(**params_dict)
         if response.status_code != HTTPStatus.OK:
-            logger.error('Сайт не доступен')
             raise ConnectionError(f'Ошибка {response.status_code}!')
         try:
             return response.json()
-        except json.JSONDecodeError:
-            logger.error('Сервер вернул невалидный json')
-            send_message('Сервер вернул невалидный json')
+        except Exception:
+            raise json.JSONDecodeError('Сервер вернул невалидный json')
     except Exception as error:
-        logger.error(f'Ошибка при запросе: {error}')
+        raise RequestException(f'Ошибка при запросе: {error}')
 
 
 def check_response(response):
@@ -68,13 +60,10 @@ def check_response(response):
     if not isinstance(response, dict):
         raise TypeError('Данный формат данных не является словарём')
     if not response:
-        logger.error('Dict is empty')
         raise Exception('Dict is empty')
     if 'homeworks' not in response:
-        logger.error('homeworks отсутствует в ответе API')
         raise Exception('homeworks отсутствует в ответе API')
     if not isinstance(response['homeworks'], list):
-        logger.error('Неверный формат данных')
         raise TypeError('Данный формат данных не является списком')
     return response.get('homeworks')
 
@@ -86,7 +75,6 @@ def parse_status(homework):
     if 'homework_name' not in homework:
         raise KeyError('Работы с таким именем не обнаружено')
     if homework_status not in HOMEWORK_VERDICTS:
-        logger.error('Неверный статус работы')
         raise KeyError('Неверный статус работы')
     verdict = HOMEWORK_VERDICTS[homework_status]
     return f'Изменился статус проверки работы "{homework_name}". {verdict}'
@@ -94,16 +82,13 @@ def parse_status(homework):
 
 def check_tokens():
     """Проверяет наличие всех токенов."""
-    try:
-        return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
-    except KeyError:
-        logger.critical('Отсутсвует один из элементов')
+    return all([PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID])
 
 
 def main():
     """Основная логика работы бота."""
     bot = Bot(token=TELEGRAM_TOKEN)
-    current_timestamp = int(time.time() - 2629743)
+    current_timestamp = int(time.time())
     check_tokens()
     if check_tokens() is not True:
         logger.critical('Отсутсвует один из токенов')
@@ -118,6 +103,7 @@ def main():
             time.sleep(RETRY_TIME)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
+            logger.error(error, exc_info=True)
             bot.send_message(TELEGRAM_CHAT_ID, message)
         finally:
             time.sleep(RETRY_TIME)
