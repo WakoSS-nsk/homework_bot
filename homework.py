@@ -93,6 +93,8 @@ def main():
     if check_tokens() is not True:
         logger.critical('Отсутсвует один из токенов')
         sys.exit('Отсутсвует один из токенов')
+    message = ''
+    previous_message = message
     while True:
         try:
             response = get_api_answer(current_timestamp)
@@ -102,7 +104,6 @@ def main():
             bot.send_message(TELEGRAM_CHAT_ID, message)
             time.sleep(RETRY_TIME)
         except Exception as error:
-            previous_message = message
             message = f'Сбой в работе программы: {error}'
             logger.error(error, exc_info=True)
             if message != previous_message:
